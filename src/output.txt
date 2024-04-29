@@ -1,21 +1,27 @@
-HIf
-HI
-NOTSAME
+Job id:0001
+Error: Operation Code Error
 
+Job id:0002
+Error: Operand Error
 
+Job id:0003
+Error: Time Limit Exceeded
 
-No Error
-VIT
-VIT
-SAME
+Job id:0004
+Error: Line Limit Exceeded
 
+Job id:0005
+Error: Invalid Page Fault
 
+Job id:0001
+Error: Out of Data
 
-No Error
 *
-**
 ***
-
-
-
-No Error
+*****
+*******
+*****
+***
+*
+Job id:0006
+Error: No Error

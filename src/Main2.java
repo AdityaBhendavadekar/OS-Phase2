@@ -1,5 +1,7 @@
 import java.io.*;
 import java.util.*;
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 
 class MyException extends Exception {
     public MyException(String s){
@@ -27,7 +29,7 @@ public class Main2 {
     boolean registerC;
     int memoryUsed;
     int SI=3,TI=0,PI=0;
-
+    String regex = "^[0-9]+$";
     int PTR;
     String EM;
     char[][] realMemory = new char[300][4];
@@ -39,12 +41,16 @@ public class Main2 {
             writer = new FileWriter(output);
         }catch(Exception e ){System.out.println(e);}
     }
-
+    char[] arr;
     public void LOAD(){
         String strLoad;
-        char[] arr = new char[20];
+        arr = new char[20];
         try{
-            while((strLoad = br.readLine())!=null) {
+            while(true) {
+                strLoad = br.readLine();
+                if(strLoad == null){
+                    System.exit(0);
+                }
                 arr = strLoad.toCharArray();
                 if (arr[0] == '$' && arr[1] == 'A' && arr[2] == 'M' && arr[3] == 'J') {
                     System.out.println("Program card detected.");
@@ -57,6 +63,7 @@ public class Main2 {
                 else if (arr[0] == '$' && arr[1] == 'E' && arr[2] == 'N' && arr[3] == 'D') {
                     //print_memory();
                     System.out.println("\nJobID: "+PCB.jobId+" Ended.");
+                    continue;
                 }
                 else {
                     if ((memoryUsed == 100)) {
@@ -74,7 +81,7 @@ public class Main2 {
             }
         }catch(Exception e){
             print_memory();
-            System.out.println("jai ho\n"+e);
+            System.out.println("Exception aa gya..\n"+e);
         }
     }
     public void init(String str){
@@ -83,6 +90,10 @@ public class Main2 {
         int TTL = Integer.parseInt(String.valueOf(arr[8])+String.valueOf(arr[9])+String.valueOf(arr[10])+String.valueOf(arr[11]));
         int TLL = Integer.parseInt(String.valueOf(arr[12])+String.valueOf(arr[13])+String.valueOf(arr[14])+String.valueOf(arr[15]));
 
+        SI=0;
+        TI=0;
+        PI=0;
+        visited = new boolean[30];
         for(int i=0;i<allo.length; i++)
             allo[i] = -1;
         //mainMemory = new char[100][4];
@@ -93,7 +104,6 @@ public class Main2 {
         registerC = false;
         registerICCounter = 0;
         memoryUsed = 0;
-        SI = 0;
         //initPageTable();
         initPCB(jobID,TTL,TLL);
         System.out.println("Memory Initialised");
@@ -111,11 +121,17 @@ public class Main2 {
             }
 
 //        here instruction register 4 bytes will be loaded with instruction GD10 from memory location;
-
             for (int i = 0; i < 4; i++) {
                 registerIR[i] = realMemory[registerIC][i];
             }
             registerICCounter++;
+            String a = String.valueOf(registerIR[0]);
+            Pattern pattern = Pattern.compile(regex);
+            Matcher matcher = pattern.matcher(a);
+            if (matcher.matches()) {
+                PI = 2;
+                masterMode();
+            }
 
             if(registerIR[0] == 'L' && registerIR[1] == 'R'){
                 PCB.TTC++;
@@ -176,60 +192,91 @@ public class Main2 {
             else{
                 PI = 1;
                 masterMode();
+                break;
             }
             if(PCB.TTC >= PCB.TTL){
                 TI=2;
                 masterMode();
+                break;
             }
         }
     }
 
     public void masterMode(){
-        //Case of TI and PI
-        if(TI == 0 && PI == 1){terminate(4);}
-        if(TI == 0 && PI == 2){terminate(5);}
-        if(TI == 0 && PI == 3){
-            terminate(6);
-            System.exit(0);
-        }
-        if(TI == 2 && PI == 1){terminate(3);terminate(4);System.exit(0);}
-        if(TI == 2 && PI == 2){terminate(3);terminate(5);System.exit(0);}
-        if(TI == 2 && PI == 3){terminate(3);System.exit(0);}
-
-        // Case of TI and SI
-        if(TI == 0 && SI == 1){
-            read();
-        }
-        if(TI == 0 && SI == 2){
-            try {
-                writeData();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
+        try{
+            //Case of TI and PI
+            if(TI == 0 && PI == 1){terminate(4);nextCard();LOAD();}
+            else if(TI == 0 && PI == 2){terminate(5);nextCard();LOAD();}
+            else if(TI == 0 && PI == 3){
+                terminate(6);
+                nextCard();
+                LOAD();
+                // System.exit(0);
             }
-        }
-        if(TI == 0 && SI == 3){terminate(0);return;/*System.exit(0);*/}
-        if(TI == 2 && SI == 1){terminate(3);System.exit(0);}
-        if(TI == 2 && SI == 2){
-            try {
-                writeData();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-            terminate(3);
-            System.exit(0);
-        }
-        if(TI == 2 || SI == 3){
-            if(TI==2){
+            else if(TI == 2 && PI == 1){
                 terminate(3);
+                terminate(4);
+                nextCard();
+                LOAD();
+                // System.exit(0);
             }
-            if(SI==3){
-                terminate(0);
-                return;
+            else if(TI == 2 && PI == 2){
+                terminate(3);
+                terminate(5);
+                nextCard();
+                LOAD();
+                // System.exit(0);
             }
-        }
+            else if(TI == 2 && PI == 3){
+                terminate(3);
+                nextCard();
+                LOAD();
+                // System.exit(0);
+            }
+
+            // Case of TI and SI
+            else if(TI == 0 && SI == 1){
+                read();
+            }
+            else if(TI == 0 && SI == 2){
+                try {
+                    writeData();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+
+            else if(TI == 0 && SI == 3){terminate(0);nextCard();LOAD();/*System.exit(0);*/}
+            else if(TI == 2 && SI == 1){terminate(3);nextCard();LOAD();/*System.exit(0);*/}
+            else if(TI == 2 && SI == 2){
+                try {
+                    writeData();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+                terminate(3);
+                nextCard();
+                LOAD();
+                // System.exit(0);
+            }
+            else if(TI == 2 || SI == 3){
+                if(TI==2){
+                    terminate(3);
+                    nextCard();
+                    LOAD();
+                }
+                if(SI==3){
+                    terminate(0);
+                    nextCard();
+                    LOAD();
+                    return;
+                }
+            }
+        }catch(Exception e){        }
+
     }
 
-    void read(){
+    void read() throws IOException{
         registerIR[3]='0';
         int loc = Integer.parseInt(String.valueOf(registerIR[2])+String.valueOf(registerIR[3]));
         int realA = addMap(loc);
@@ -251,12 +298,16 @@ public class Main2 {
         }
         if (realMemory[temp][0] == '$' && realMemory[temp][1] == 'E' && realMemory[temp][2] == 'N' && realMemory[temp][3] == 'D') {
             terminate(1);
+            LOAD();
         }
     }
     void writeData() throws IOException {
         PCB.LLC++;
-        if(PCB.LLC>PCB.TLL)
+        if(PCB.LLC>PCB.TLL){
             terminate(2);
+            nextCard();
+            LOAD();
+        }
         registerIR[3]='0';
         String str = new String();
         int loc = Integer.parseInt(String.valueOf(registerIR[2])+String.valueOf(registerIR[3]));
@@ -278,6 +329,7 @@ public class Main2 {
             PI = 3;
         }
         System.out.println(""+str);
+
     }
     void halt(){
         return;
@@ -300,6 +352,7 @@ public class Main2 {
             int d = num%10;
             allo[IC/10] = num;
             //System.out.println(d+" "+c+" "+b+" "+a);
+            // Storing Address in Page table
             realMemory[PTR+IC/10][0] = (char)d;
             realMemory[PTR+IC/10][1] = (char)c;
             realMemory[PTR+IC/10][2] = (char)b;
@@ -325,7 +378,7 @@ public class Main2 {
         PCB.jobId = jobID;
     }
     void terminate(int em){
-        String strTer="\n\n";
+        String strTer="";
 
         try{
             writer.write(strTer+"\n");
@@ -364,7 +417,7 @@ public class Main2 {
                     break;
                 }
             }
-            writer.write(strTer+"\n");
+            writer.write("Job id:"+PCB.jobId+"\nError: "+strTer+"\n");
             writer.flush();
             throw new MyException(strTer);
         }catch(MyException e){
@@ -384,5 +437,8 @@ public class Main2 {
         visited[a] = true;
         return a;
     }
-
+    void nextCard() throws IOException{
+        SI=0;TI=0;PI=0;
+        while(!br.readLine().equals("$END")){}
+    }
 }
