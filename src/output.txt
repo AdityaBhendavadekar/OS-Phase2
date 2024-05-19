@@ -1,3 +1,4 @@
+
 Job id:0001
 Error: Operation Code Error
 
@@ -15,7 +16,6 @@ Error: Invalid Page Fault
 
 Job id:0001
 Error: Out of Data
-
 *
 ***
 *****
@@ -23,5 +23,18 @@ Error: Out of Data
 *****
 ***
 *
+
 Job id:0006
+Error: No Error
+10
+20
+1010
+
+Job id:0007
+Error: No Error
+10
+20
+0030
+
+Job id:0008
 Error: No Error
